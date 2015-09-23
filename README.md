@@ -1,4 +1,4 @@
-![surfware xoxo](./surfware.jpg)
+![surfware xoxo](./assets//surfware.jpg)
 
 # Woad Toad™ Surfware™
 A games developments frameworks for Lua.
