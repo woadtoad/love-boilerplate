@@ -1,5 +1,9 @@
-local Map = {}
-local framework
+--- Map object
+-- @module map
+
+local path       = (...):gsub('%.[^%.]+$', '') .. "."
+local pluginPath = string.gsub(path, "[.]", "/") .. "plugins/"
+local Map        = {}
 
 -- https://github.com/stevedonovan/Penlight/blob/master/lua/pl/path.lua#L286
 local function formatPath(path)
@@ -20,82 +24,16 @@ local function formatPath(path)
 	return path
 end
 
-local function rotateVertex(v, x, y, cos, sin)
-	local vertex = {
-		x = v.x,
-		y = v.y,
-	}
-
-	vertex.x = vertex.x - x
-	vertex.y = vertex.y - y
-
-	local vx = cos * vertex.x - sin * vertex.y
-	local vy = sin * vertex.x + cos * vertex.y
-
-	return vx + x, vy + y
-end
-
-local function convertEllipseToPolygon(x, y, w, h, max_segments)
-	local function calc_segments(segments)
-		local function vdist(a, b)
-			local c = {
-				x = a.x - b.x,
-				y = a.y - b.y,
-			}
-
-			return c.x * c.x + c.y * c.y
-		end
-
-		segments = segments or 64
-		local vertices = {}
-
-		local v = { 1, 2, math.ceil(segments/4-1), math.ceil(segments/4) }
-
-		local m
-		if framework.getMeter then
-			m = framework.getMeter()
-		else
-			m = 32
-		end
-
-		for _, i in ipairs(v) do
-			local angle = (i / segments) * math.pi * 2
-			local px    = x + w / 2 + math.cos(angle) * w / 2
-			local py    = y + h / 2 + math.sin(angle) * h / 2
-
-			table.insert(vertices, { x = px / m, y = py / m })
-		end
-
-		local dist1 = vdist(vertices[1], vertices[2])
-		local dist2 = vdist(vertices[3], vertices[4])
-
-		-- Box2D threshold
-		if dist1 < 0.0025 or dist2 < 0.0025 then
-			return calc_segments(segments-2)
-		end
-
-		return segments
+--- Instance a new map
+-- @param path Path to the map file
+-- @param plugins A list of plugins to load
+-- @return nil
+function Map:init(path, plugins)
+	if type(plugins) == "table" then
+		self:loadPlugins(plugins)
 	end
 
-	local segments = calc_segments(max_segments)
-	local vertices = {}
-
-	table.insert(vertices, { x = x + w / 2, y = y + h / 2 })
-
-	for i=0, segments do
-		local angle = (i / segments) * math.pi * 2
-		local px    = x + w / 2 + math.cos(angle) * w / 2
-		local py    = y + h / 2 + math.sin(angle) * h / 2
-
-		table.insert(vertices, { x = px, y = py })
-	end
-
-	return vertices
-end
-
-function Map:init(path, fw)
-	framework          = fw
-	self.canvas        = framework:newCanvas()
+	self:resize()
 	self.objects       = {}
 	self.tiles         = {}
 	self.tileInstances = {}
@@ -109,10 +47,10 @@ function Map:init(path, fw)
 	-- Set tiles, images
 	local gid = 1
 	for i, tileset in ipairs(self.tilesets) do
-		assert(tileset.image, "STI does not yet support Tile Collections. Sorry!")
+		assert(tileset.image, "STI does not support Tile Collections.\nYou need to create a Texture Atlas.")
 
 		local image   = formatPath(path .. tileset.image)
-		tileset.image = framework.newImage(image)
+		tileset.image = love.graphics.newImage(image)
 		gid           = self:setTiles(i, tileset, gid)
 	end
 
@@ -122,224 +60,28 @@ function Map:init(path, fw)
 	end
 end
 
-function Map:initWorldCollision(world)
-	assert(framework.newBody, "To use the built-in collision system, please enable the physics module.")
-
-	local body      = framework.newBody(world)
-	local collision = {
-		body = body,
-	}
-
-	local function addObjectToWorld(objshape, vertices, userdata)
-		local shape
-
-		if objshape == "polyline" then
-			shape = framework.newChainShape(false, unpack(vertices))
-		else
-			shape = framework.newPolygonShape(unpack(vertices))
-		end
-
-		local fixture = framework.newFixture(body, shape)
-
-		fixture:setUserData(userdata)
-
-		local obj = {
-			shape   = shape,
-			fixture = fixture,
-		}
-
-		table.insert(collision, obj)
-	end
-
-	local function getPolygonVertices(object, tile, precalc)
-		local ox, oy = 0, 0
-
-		if not precalc then
-			ox = object.x
-			oy = object.y
-		end
-
-		local vertices = {}
-		for _, vertex in ipairs(object.polygon) do
-			table.insert(vertices, tile.x + ox + vertex.x)
-			table.insert(vertices, tile.y + oy + vertex.y)
-		end
-
-		return vertices
-	end
-
-	local function calculateObjectPosition(object, tile)
-		local o = {
-			shape   = object.shape,
-			x       = object.x,
-			y       = object.y,
-			w       = object.width,
-			h       = object.height,
-			polygon = object.polygon or object.polyline or object.ellipse or object.rectangle
-		}
-
-		local t = tile or { x=0, y=0 }
-
-		local userdata = {
-			object   = o,
-			instance = t,
-			tile     = t.gid and self.tiles[t.gid]
-		}
-
-		if o.shape == "rectangle" then
-			o.r       = object.rotation or 0
-			local cos = math.cos(math.rad(o.r))
-			local sin = math.sin(math.rad(o.r))
-
-			if object.gid then
-				local tileset = self.tiles[object.gid].tileset
-				local lid     = object.gid - self.tilesets[tileset].firstgid
-				local tile    = {}
-
-				-- This fixes a height issue
-				 o.y = o.y + self.tiles[object.gid].offset.y
-
-				for _, t in ipairs(self.tilesets[tileset].tiles) do
-					if t.id == lid then
-						tile = t
-						break
-					end
-				end
-
-				if tile.objectGroup then
-					for _, obj in ipairs(tile.objectGroup.objects) do
-						-- Every object in the tile
-						calculateObjectPosition(obj, object)
-					end
-
-					return
-				else
-					o.w = self.tiles[object.gid].width
-					o.h = self.tiles[object.gid].height
-				end
-			end
-
-			o.polygon = {
-				{ x=o.x,       y=o.y       },
-				{ x=o.x + o.w, y=o.y       },
-				{ x=o.x + o.w, y=o.y + o.h },
-				{ x=o.x,       y=o.y + o.h },
-			}
-
-			for _, vertex in ipairs(o.polygon) do
-				if self.orientation == "isometric" then
-					vertex.x, vertex.y = self:convertIsometricToScreen(vertex.x, vertex.y)
-				end
-
-				vertex.x, vertex.y = rotateVertex(vertex, o.x, o.y, cos, sin)
-			end
-
-			local vertices = getPolygonVertices(o, t, true)
-			addObjectToWorld(o.shape, vertices, userdata)
-		elseif o.shape == "ellipse" then
-			if not o.polygon then
-				o.polygon = convertEllipseToPolygon(o.x, o.y, o.w, o.h)
-			end
-			local vertices  = getPolygonVertices(o, t, true)
-			local triangles = framework.triangulate(vertices)
-
-			for _, triangle in ipairs(triangles) do
-				addObjectToWorld(o.shape, triangle, userdata)
-			end
-		elseif o.shape == "polygon" then
-			local precalc = false
-			if not t.gid then precalc = true end
-
-			local vertices  = getPolygonVertices(o, t, precalc)
-			local triangles = framework.triangulate(vertices)
-
-			for _, triangle in ipairs(triangles) do
-				addObjectToWorld(o.shape, triangle, userdata)
-			end
-		elseif o.shape == "polyline" then
-			local precalc = false
-			if not t.gid then precalc = true end
-
-			local vertices	= getPolygonVertices(o, t, precalc)
-			addObjectToWorld(o.shape, vertices, userdata)
-		end
-	end
-
-	for _, tileset in ipairs(self.tilesets) do
-		for _, tile in ipairs(tileset.tiles) do
-			local gid = tileset.firstgid + tile.id
-
-			if tile.objectGroup then
-				if self.tileInstances[gid] then
-					for _, instance in ipairs(self.tileInstances[gid]) do
-						for _, object in ipairs(tile.objectGroup.objects) do
-							-- Every object in every instance of a tile
-							calculateObjectPosition(object, instance)
-						end
-					end
-				end
-			elseif tile.properties and tile.properties.collidable == "true" and self.tileInstances[gid] then
-				for _, instance in ipairs(self.tileInstances[gid]) do
-					-- Every instance of a tile
-					local object = {
-						shape  = "rectangle",
-						x      = 0,
-						y      = 0,
-						width  = tileset.tilewidth,
-						height = tileset.tileheight,
-					}
-
-					calculateObjectPosition(object, instance)
+--- Load plugins
+-- @param plugins A list of plugins to load
+-- @return nil
+function Map:loadPlugins(plugins)
+	for _, plugin in ipairs(plugins) do
+		local p = pluginPath .. plugin .. ".lua"
+		if love.filesystem.isFile(p) then
+			local file = love.filesystem.load(p)()
+			for k, func in pairs(file) do
+				if not self[k] then
+					self[k] = func
 				end
 			end
 		end
 	end
-
-	for _, layer in ipairs(self.layers) do
-		if layer.properties.collidable == "true" then
-			-- Entire layer
-			if layer.type == "tilelayer" then
-				for y, tiles in ipairs(layer.data) do
-					for x, tile in pairs(tiles) do
-						local object = {
-							shape  = "rectangle",
-							x      = x * self.tilewidth + tile.offset.x,
-							y      = y * self.tileheight + tile.offset.y,
-							width  = tile.width,
-							height = tile.height,
-						}
-						calculateObjectPosition(object)
-					end
-				end
-			elseif layer.type == "objectgroup" then
-				for _, object in ipairs(layer.objects) do
-					calculateObjectPosition(object)
-				end
-			elseif layer.type == "imagelayer" then
-				local object = {
-					shape  = "rectangle",
-					x      = layer.x or 0,
-					y      = layer.y or 0,
-					width  = layer.width,
-					height = layer.height,
-				}
-				calculateObjectPosition(object)
-			end
-		end
-
-		if layer.type == "objectgroup" then
-			for _, object in ipairs(layer.objects) do
-				if object.properties.collidable == "true" then
-					-- Individual objects
-					calculateObjectPosition(object)
-				end
-			end
-		end
-	end
-
-	return collision
 end
 
+--- Create Tiles
+-- @param index Index of the Tileset
+-- @param tileset Tileset data
+-- @param gid First Global ID in Tileset
+-- @return number Next Tileset's first Global ID
 function Map:setTiles(index, tileset, gid)
 	local function getTiles(i, t, m, s)
 		i = i - m
@@ -354,7 +96,7 @@ function Map:setTiles(index, tileset, gid)
 		return n
 	end
 
-	local quad = framework.newQuad
+	local quad = love.graphics.newQuad
 	local mw   = self.tilewidth
 	local iw   = tileset.imagewidth
 	local ih   = tileset.imageheight
@@ -418,6 +160,10 @@ function Map:setTiles(index, tileset, gid)
 	return gid
 end
 
+--- Create Layers
+-- @param layer Layer data
+-- @param path (Optional) Path to an Image Layer's image
+-- @return nil
 function Map:setLayer(layer, path)
 	layer.x      = layer.x or 0
 	layer.y      = layer.y or 0
@@ -437,7 +183,7 @@ function Map:setLayer(layer, path)
 
 		if layer.image ~= "" then
 			local image  = formatPath(path..layer.image)
-			layer.image  = framework.newImage(image)
+			layer.image  = love.graphics.newImage(image)
 			layer.width  = layer.image:getWidth()
 			layer.height = layer.image:getHeight()
 		end
@@ -446,6 +192,9 @@ function Map:setLayer(layer, path)
 	self.layers[layer.name] = layer
 end
 
+--- Add Tiles to Tile Layer
+-- @param layer The Tile Layer
+-- @return nil
 function Map:setTileData(layer)
 	local i   = 1
 	local map = {}
@@ -466,13 +215,92 @@ function Map:setTileData(layer)
 	layer.data = map
 end
 
+--- Add Objects to Layer
+-- @param layer The Object Layer
+-- @return nil
 function Map:setObjectData(layer)
 	for _, object in ipairs(layer.objects) do
 		self.objects[object.id] = object
 	end
 end
 
+--- Correct position and orientation of Objects in an Object Layer
+-- @param layer The Object Layer
+-- @return nil
 function Map:setObjectCoordinates(layer)
+	local function convertEllipseToPolygon(x, y, w, h, max_segments)
+		local function calc_segments(segments)
+			local function vdist(a, b)
+				local c = {
+					x = a.x - b.x,
+					y = a.y - b.y,
+				}
+
+				return c.x * c.x + c.y * c.y
+			end
+
+			segments = segments or 64
+			local vertices = {}
+
+			local v = { 1, 2, math.ceil(segments/4-1), math.ceil(segments/4) }
+
+			local m
+			if love.physics then
+				m = love.physics.getMeter()
+			else
+				m = 32
+			end
+
+			for _, i in ipairs(v) do
+				local angle = (i / segments) * math.pi * 2
+				local px    = x + w / 2 + math.cos(angle) * w / 2
+				local py    = y + h / 2 + math.sin(angle) * h / 2
+
+				table.insert(vertices, { x = px / m, y = py / m })
+			end
+
+			local dist1 = vdist(vertices[1], vertices[2])
+			local dist2 = vdist(vertices[3], vertices[4])
+
+			-- Box2D threshold
+			if dist1 < 0.0025 or dist2 < 0.0025 then
+				return calc_segments(segments-2)
+			end
+
+			return segments
+		end
+
+		local segments = calc_segments(max_segments)
+		local vertices = {}
+
+		table.insert(vertices, { x = x + w / 2, y = y + h / 2 })
+
+		for i=0, segments do
+			local angle = (i / segments) * math.pi * 2
+			local px    = x + w / 2 + math.cos(angle) * w / 2
+			local py    = y + h / 2 + math.sin(angle) * h / 2
+
+			table.insert(vertices, { x = px, y = py })
+		end
+
+		return vertices
+	end
+
+	local function rotateVertex(v, x, y, cos, sin)
+		local vertex = {
+			x = v.x,
+			y = v.y,
+		}
+
+		vertex.x = vertex.x - x
+		vertex.y = vertex.y - y
+
+		local vx = cos * vertex.x - sin * vertex.y
+		local vy = sin * vertex.x + cos * vertex.y
+
+		return vx + x, vy + y
+	end
+
 	local function updateVertex(vertex, x, y, cos, sin)
 		if self.orientation == "isometric" then
 			x, y               = self:convertIsometricToScreen(x, y)
@@ -529,10 +357,13 @@ function Map:setObjectCoordinates(layer)
 	end
 end
 
+--- Batch Tiles in Tile Layer for improved draw speed
+-- @param layer The Tile Layer
+-- @return nil
 function Map:setSpriteBatches(layer)
-	local newBatch = framework.newSpriteBatch
-	local w        = framework.getWidth()
-	local h        = framework.getHeight()
+	local newBatch = love.graphics.newSpriteBatch
+	local w        = love.graphics.getWidth()
+	local h        = love.graphics.getHeight()
 	local tw       = self.tilewidth
 	local th       = self.tileheight
 	local bw       = math.ceil(w / tw)
@@ -613,8 +444,11 @@ function Map:setSpriteBatches(layer)
 	layer.batches = batches
 end
 
+--- Batch Tiles in Object Layer for improved draw speed
+-- @param layer The Object Layer
+-- @return nil
 function Map:setObjectSpriteBatches(layer)
-	local newBatch = framework.newSpriteBatch
+	local newBatch = love.graphics.newSpriteBatch
 	local tw       = self.tilewidth
 	local th       = self.tileheight
 	local batches  = {
@@ -647,6 +481,12 @@ function Map:setObjectSpriteBatches(layer)
 	layer.batches = batches
 end
 
+--- Only draw what is visible on screen for improved draw speed
+-- @param tx Translate X axis (in pixels)
+-- @param ty Translate Y axis (in pixels)
+-- @param w Width of screen (in pixels)
+-- @param h Height of screen (in pixels)
+-- @return nil
 function Map:setDrawRange(tx, ty, w, h)
 	local tw, th = self.tilewidth, self.tileheight
 	local sx, sy, ex, ey
@@ -676,6 +516,10 @@ function Map:setDrawRange(tx, ty, w, h)
 	}
 end
 
+--- Create a Custom Layer to place userdata in (such as player sprites)
+-- @param name Name of Custom Layer
+-- @param index Draw order within Layer stack
+-- @return table Custom Layer
 function Map:addCustomLayer(name, index)
 	local layer = {
       type       = "customlayer",
@@ -694,6 +538,9 @@ function Map:addCustomLayer(name, index)
 	return layer
 end
 
+--- Convert another Layer into a Custom Layer
+-- @param index Index or name of Layer to convert
+-- @return table Custom Layer
 function Map:convertToCustomLayer(index)
 	local layer = assert(self.layers[index], "Layer not found: " .. index)
 
@@ -709,8 +556,13 @@ function Map:convertToCustomLayer(index)
 
 	function layer:draw() return end
 	function layer:update(dt) return end
+
+	return layer
 end
 
+--- Remove a Layer from the Layer stack
+-- @param index Index or name of Layer to convert
+-- @return nil
 function Map:removeLayer(index)
 	local layer = assert(self.layers[index], "Layer not found: " .. index)
 
@@ -729,6 +581,9 @@ function Map:removeLayer(index)
 	end
 end
 
+--- Animate Tiles and update every Layer
+-- @param dt Delta Time
+-- @return nil
 function Map:update(dt)
 	for gid, tile in pairs( self.tiles ) do
 		local update, t
@@ -760,9 +615,11 @@ function Map:update(dt)
 	end
 end
 
+--- Draw every Layer
+-- @return nil
 function Map:draw()
-	local current_canvas = framework.getCanvas()
-	framework.setCanvas(self.canvas)
+	local current_canvas = love.graphics.getCanvas()
+	love.graphics.setCanvas(self.canvas)
 	if self.canvas.clear then
 		self.canvas:clear()
 	else
@@ -776,19 +633,25 @@ function Map:draw()
 		end
 	end
 
-	framework.setCanvas(current_canvas)
-	framework.push()
-	framework.origin()
-	framework.draw(self.canvas)
-	framework.pop()
+	love.graphics.setCanvas(current_canvas)
+	love.graphics.push()
+	love.graphics.origin()
+	love.graphics.draw(self.canvas)
+	love.graphics.pop()
 end
 
+--- Draw an individual Layer
+-- @param layer The Layer to draw
+-- @return nil
 function Map:drawLayer(layer)
-	framework.setColor(255, 255, 255, 255 * layer.opacity)
+	love.graphics.setColor(255, 255, 255, 255 * layer.opacity)
 	layer:draw()
-	framework.setColor(255, 255, 255, 255)
+	love.graphics.setColor(255, 255, 255, 255)
 end
 
+--- Default draw function for Tile Layers
+-- @param layer The Tile Layer to draw
+-- @return nil
 function Map:drawTileLayer(layer)
 	if type(layer) == "string" or type(layer) == "number" then
 		layer = self.layers[layer]
@@ -812,7 +675,7 @@ function Map:drawTileLayer(layer)
 					local batch = batches[by] and batches[by][bx]
 
 					if batch then
-						framework.draw(batch, math.floor(layer.x), math.floor(layer.y))
+						love.graphics.draw(batch, math.floor(layer.x), math.floor(layer.y))
 					end
 				end
 			end
@@ -820,6 +683,9 @@ function Map:drawTileLayer(layer)
 	end
 end
 
+--- Default draw function for Object Layers
+-- @param layer The Object Layer to draw
+-- @return nil
 function Map:drawObjectLayer(layer)
 	if type(layer) == "string" or type(layer) == "number" then
 		layer = self.layers[layer]
@@ -849,31 +715,31 @@ function Map:drawObjectLayer(layer)
 		local vertices = sortVertices(obj)
 
 		if shape == "polyline" then
-			framework.setColor(shadow)
-			framework.line(vertices[2])
-			framework.setColor(line)
-			framework.line(vertices[1])
+			love.graphics.setColor(shadow)
+			love.graphics.line(vertices[2])
+			love.graphics.setColor(line)
+			love.graphics.line(vertices[1])
 
 			return
 		elseif shape == "polygon" then
-			framework.setColor(fill)
-			if not framework.isConvex(vertices[1]) then
-				local triangles = framework.triangulate(vertices[1])
+			love.graphics.setColor(fill)
+			if not love.math.isConvex(vertices[1]) then
+				local triangles = love.math.triangulate(vertices[1])
 				for _, triangle in ipairs(triangles) do
-					framework.polygon("fill", triangle)
+					love.graphics.polygon("fill", triangle)
 				end
 			else
-				framework.polygon("fill", vertices[1])
+				love.graphics.polygon("fill", vertices[1])
 			end
 		else
-			framework.setColor(fill)
-			framework.polygon("fill", vertices[1])
+			love.graphics.setColor(fill)
+			love.graphics.polygon("fill", vertices[1])
 		end
 
-		framework.setColor(shadow)
-		framework.polygon("line", vertices[2])
-		framework.setColor(line)
-		framework.polygon("line", vertices[1])
+		love.graphics.setColor(shadow)
+		love.graphics.polygon("line", vertices[2])
+		love.graphics.setColor(line)
+		love.graphics.polygon("line", vertices[1])
 	end
 
 	for _, object in ipairs(layer.objects) do
@@ -888,12 +754,15 @@ function Map:drawObjectLayer(layer)
 		end
 	end
 
-	framework.setColor(reset)
+	love.graphics.setColor(reset)
 	for _, batch in pairs(layer.batches) do
-		framework.draw(batch, 0, 0)
+		love.graphics.draw(batch, 0, 0)
 	end
 end
 
+--- Default draw function for Image Layers
+-- @param layer The Image Layer to draw
+-- @return nil
 function Map:drawImageLayer(layer)
 	if type(layer) == "string" or type(layer) == "number" then
 		layer = self.layers[layer]
@@ -902,20 +771,25 @@ function Map:drawImageLayer(layer)
 	assert(layer.type == "imagelayer", "Invalid layer type: " .. layer.type .. ". Layer must be of type: imagelayer")
 
 	if layer.image ~= "" then
-		framework.draw(layer.image, layer.x, layer.y)
+		love.graphics.draw(layer.image, layer.x, layer.y)
 	end
 end
 
-function Map:drawWorldCollision(collision)
-	for _, obj in ipairs(collision) do
-		framework.polygon("line", collision.body:getWorldPoints(obj.shape:getPoints()))
-	end
-end
-
+--- Resize the drawable area of the Map
+-- @param w The new width of the drawable area (in pixels)
+-- @param h The new Height of the drawable area (in pixels)
+-- @return nil
 function Map:resize(w, h)
-	self.canvas = framework:newCanvas(w, h)
+	w = w or love.graphics.getWidth()
+	h = h or love.graphics.getHeight()
+
+	self.canvas = love.graphics.newCanvas(w, h)
+	self.canvas:setFilter("nearest", "nearest")
 end
 
+--- Create flipped or rotated Tiles based on bitop flags
+-- @param gid The flagged Global ID
+-- @return table Flipped Tile
 function Map:setFlippedGID(gid)
 	local bit31   = 2147483648
 	local bit30   = 1073741824
@@ -987,6 +861,9 @@ function Map:setFlippedGID(gid)
 	return self.tiles[gid]
 end
 
+--- Get custom properties from Layer
+-- @param layer The Layer
+-- @return table List of properties
 function Map:getLayerProperties(layer)
 	local l = self.layers[layer]
 
@@ -995,6 +872,11 @@ function Map:getLayerProperties(layer)
 	return l.properties
 end
 
+--- Get custom properties from Tile
+-- @param layer The Layer that the Tile belongs to
+-- @param x The X axis location of the Tile (in tiles)
+-- @param y The Y axis location of the Tile (in tiles)
+-- @return table List of properties
 function Map:getTileProperties(layer, x, y)
 	local tile = self.layers[layer].data[y][x]
 
@@ -1003,6 +885,10 @@ function Map:getTileProperties(layer, x, y)
 	return tile.properties
 end
 
+--- Get custom properties from Object
+-- @param layer The Layer that the Object belongs to
+-- @param object The index or name of the Object
+-- @return table List of properties
 function Map:getObjectProperties(layer, object)
 	local o = self.layers[layer].objects
 
@@ -1022,6 +908,11 @@ function Map:getObjectProperties(layer, object)
 	return o.properties
 end
 
+--- Project isometric position to orthoganal position
+-- @param x The X axis location of the point (in pixels)
+-- @param y The Y axis location of the point (in pixels)
+-- @return number The X axis location of the point (in pixels)
+-- @return number The Y axis location of the point (in pixels)
 function Map:convertIsometricToScreen(x, y)
 	local mw = self.width
 	local tw = self.tilewidth
@@ -1033,6 +924,11 @@ function Map:convertIsometricToScreen(x, y)
 	return sx, sy
 end
 
+--- Project orthoganal position to isometric position
+-- @param x The X axis location of the point (in pixels)
+-- @param y The Y axis location of the point (in pixels)
+-- @return number The X axis location of the point (in pixels)
+-- @return number The Y axis location of the point (in pixels)
 function Map:convertScreenToIsometric(x, y)
 	local mw = self.width
 	local mh = self.height
@@ -1046,6 +942,11 @@ function Map:convertScreenToIsometric(x, y)
 	return tx, ty
 end
 
+--- Convert orthoganal tile space to screen space
+-- @param x The X axis location of the point (in tiles)
+-- @param y The Y axis location of the point (in tiles)
+-- @return number The X axis location of the point (in pixels)
+-- @return number The Y axis location of the point (in pixels)
 function Map:convertTileToScreen(x, y)
 	local tw = self.tilewidth
 	local th = self.tileheight
@@ -1055,6 +956,11 @@ function Map:convertTileToScreen(x, y)
 	return sx, sy
 end
 
+--- Convert orthoganal screen space to tile space
+-- @param x The X axis location of the point (in pixels)
+-- @param y The Y axis location of the point (in pixels)
+-- @return number The X axis location of the point (in tiles)
+-- @return number The Y axis location of the point (in tiles)
 function Map:convertScreenToTile(x, y)
 	local tw = self.tilewidth
 	local th = self.tileheight
@@ -1064,6 +970,11 @@ function Map:convertScreenToTile(x, y)
 	return tx, ty
 end
 
+--- Convert isometric tile space to screen space
+-- @param x The X axis location of the point (in tiles)
+-- @param y The Y axis location of the point (in tiles)
+-- @return number The X axis location of the point (in pixels)
+-- @return number The Y axis location of the point (in pixels)
 function Map:convertIsometricTileToScreen(x, y)
 	local mw = self.width
 	local tw = self.tilewidth
@@ -1075,6 +986,11 @@ function Map:convertIsometricTileToScreen(x, y)
 	return sx, sy
 end
 
+--- Convert isometric screen space to tile space
+-- @param x The X axis location of the point (in pixels)
+-- @param y The Y axis location of the point (in pixels)
+-- @return number The X axis location of the point (in tiles)
+-- @return number The Y axis location of the point (in tiles)
 function Map:convertScreenToIsometricTile(x, y)
 	local mw = self.width
 	local tw = self.tilewidth
@@ -1086,6 +1002,11 @@ function Map:convertScreenToIsometricTile(x, y)
 	return tx, ty
 end
 
+--- Convert staggered isometric tile space to screen space
+-- @param x The X axis location of the point (in tiles)
+-- @param y The Y axis location of the point (in tiles)
+-- @return number The X axis location of the point (in pixels)
+-- @return number The Y axis location of the point (in pixels)
 function Map:convertStaggeredTileToScreen(x, y)
 	local tw = self.tilewidth
 	local th = self.tileheight
@@ -1095,6 +1016,11 @@ function Map:convertStaggeredTileToScreen(x, y)
 	return sx, sy
 end
 
+--- Convert staggered isometric screen space to tile space
+-- @param x The X axis location of the point (in pixels)
+-- @param y The Y axis location of the point (in pixels)
+-- @return number The X axis location of the point (in tiles)
+-- @return number The Y axis location of the point (in tiles)
 function Map:convertScreenToStaggeredTile(x, y)
 	local function topLeft(x, y)
 		if (math.ceil(y) % 2) then
@@ -1153,3 +1079,153 @@ function Map:convertScreenToStaggeredTile(x, y)
 end
 
 return Map
+
+--- A list of individual layers indexed both by draw order and name
+-- @table Map.layers
+-- @see TileLayer
+-- @see ObjectLayer
+-- @see ImageLayer
+-- @see CustomLayer
+
+--- A list of individual tiles indexed by Global ID
+-- @table Map.tiles
+-- @see Tile
+-- @see Map.tileInstances
+
+--- A list of tile instances indexed by Global ID
+-- @table Map.tileInstances
+-- @see TileInstance
+-- @see Tile
+-- @see Map.tiles
+
+--- A list of individual objects indexed by Global ID
+-- @table Map.objects
+-- @see Object
+
+--- @table TileLayer
+-- @field name The name of the layer
+-- @field x Position on the X axis (in pixels)
+-- @field y Position on the Y axis (in pixels)
+-- @field width Width of layer (in tiles)
+-- @field height Height of layer (in tiles)
+-- @field visible Toggle if layer is visible or hidden
+-- @field opacity Opacity of layer
+-- @field properties Custom properties
+-- @field data A two dimensional table filled with individual tiles indexed by [y][x] (in tiles)
+-- @field update Update function
+-- @field draw Draw function
+-- @see Map.layers
+-- @see Tile
+
+--- @table ObjectLayer
+-- @field name The name of the layer
+-- @field x Position on the X axis (in pixels)
+-- @field y Position on the Y axis (in pixels)
+-- @field visible Toggle if layer is visible or hidden
+-- @field opacity Opacity of layer
+-- @field properties Custom properties
+-- @field objects List of objects indexed by draw order
+-- @field update Update function
+-- @field draw Draw function
+-- @see Map.layers
+-- @see Object
+
+--- @table ImageLayer
+-- @field name The name of the layer
+-- @field x Position on the X axis (in pixels)
+-- @field y Position on the Y axis (in pixels)
+-- @field visible Toggle if layer is visible or hidden
+-- @field opacity Opacity of layer
+-- @field properties Custom properties
+-- @field image Image to be drawn
+-- @field update Update function
+-- @field draw Draw function
+-- @see Map.layers
+
+--- Custom Layers are used to place userdata such as sprites within the draw order of the map.
+-- @table CustomLayer
+-- @field name The name of the layer
+-- @field x Position on the X axis (in pixels)
+-- @field y Position on the Y axis (in pixels)
+-- @field visible Toggle if layer is visible or hidden
+-- @field opacity Opacity of layer
+-- @field properties Custom properties
+-- @field update Update function
+-- @field draw Draw function
+-- @see Map.layers
+-- @usage
+--	-- Create a Custom Layer
+--	local spriteLayer = map:addCustomLayer("Sprite Layer", 3)
+--
+--	-- Add data to Custom Layer
+--	spriteLayer.sprites = {
+--		player = {
+--			image = love.graphics.newImage("assets/sprites/player.png"),
+--			x = 64,
+--			y = 64,
+--			r = 0,
+--		}
+--	}
+--
+--	-- Update callback for Custom Layer
+--	function spriteLayer:update(dt)
+--		for _, sprite in pairs(self.sprites) do
+--			sprite.r = sprite.r + math.rad(90 * dt)
+--		end
+--	end
+--
+--	-- Draw callback for Custom Layer
+--	function spriteLayer:draw()
+--		for _, sprite in pairs(self.sprites) do
+--			local x = math.floor(sprite.x)
+--			local y = math.floor(sprite.y)
+--			local r = sprite.r
+--			love.graphics.draw(sprite.image, x, y, r)
+--		end
+--	end
+
+--- @table Tile
+-- @field id Local ID within Tileset
+-- @field gid Global ID
+-- @field tileset Tileset ID
+-- @field quad Quad object
+-- @field properties Custom properties
+-- @field terrain Terrain data
+-- @field animation Animation data
+-- @field frame Current animation frame
+-- @field time Time spent on current animation frame
+-- @field width Width of tile
+-- @field height Height of tile
+-- @field sx Scale value on the X axis
+-- @field sy Scale value on the Y axis
+-- @field r Rotation of tile (in radians)
+-- @field offset Offset drawing position
+-- @field offset.x Offset value on the X axis
+-- @field offset.y Offset value on the Y axis
+-- @see Map.tiles
+
+--- @table TileInstance
+-- @field batch Spritebatch the Tile Instance belongs to
+-- @field id ID within the spritebatch
+-- @field gid Global ID
+-- @field x Position on the X axis (in pixels)
+-- @field y Position on the Y axis (in pixels)
+-- @see Map.tileInstances
+-- @see Tile
+
+--- @table Object
+-- @field id Global ID
+-- @field name Name of object (non-unique)
+-- @field shape Shape of object
+-- @field x Position of object on X axis (in pixels)
+-- @field y Position of object on Y axis (in pixels)
+-- @field width Width of object (in pixels)
+-- @field height Heigh tof object (in pixels)
+-- @field rotation Rotation of object (in radians)
+-- @field visible Toggle if object is visible or hidden
+-- @field properties Custom properties
+-- @field ellipse List of verticies of specific shape
+-- @field rectangle List of verticies of specific shape
+-- @field polygon List of verticies of specific shape
+-- @field polyline List of verticies of specific shape
+-- @see Map.objects

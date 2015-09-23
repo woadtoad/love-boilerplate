@@ -23,7 +23,7 @@ function hx.newWorld(settings)
     world.box2d_world:setCallbacks(world.collisionOnEnter, world.collisionOnExit, world.collisionPre, world.collisionPost)
     world:collisionClear()
     world:addCollisionClass('Default')
-    
+
     return world
 end
 

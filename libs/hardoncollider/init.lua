@@ -24,13 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ]]--
 
-local  common_local =  common
-
-
-
-local _NAME = (...):gsub('%.init$','')
-local _NAME = _NAME .. "." 
-
+local _NAME, common_local = ..., common
 if not (type(common) == 'table' and common.class and common.instance) then
 	assert(common_class ~= false, 'No class commons specification available.')
 	require(_NAME .. '.class')

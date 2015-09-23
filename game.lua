@@ -4,7 +4,7 @@ local UPDATELIST = {}
 
 function Game:initialize()
 	--Player Class
-	player = require('DATA.player')
+	player = require('src.player')
 
 	--we are using box 2d in this example, and i am using a little library called hxcx which simplifies using box 2d a ton, but we still have access to the core mappings so it's a win win for us. 
 	world = HX.newWorld({gravity_y = 70})

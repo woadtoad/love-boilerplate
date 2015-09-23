@@ -40,45 +40,45 @@ toad = [[
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --CLASSES -- lua doesn't have classes by default, so this library handles it. 
-CLASS = require("LIB.middleclass")
+CLASS = require("libs.middleclass")
 
 --JUMPER -- THIS LIBRARY HANDLES ANY PATH FINDING WE MAY WANT! it takes a 2d grid. 
-JUMPER = require("LIB.JUMPER.pathfinder")
+JUMPER = require("libs.jumper.pathfinder")
 
 --STI -- Tilemap loader. We can use tiled to bring in level maps. 
-STI = require("LIB.STI.init")
+STI = require("libs.sti.init")
 
 --STATE MANAGER -- Nice clean state management -- https://github.com/kikito/stateful.lua
-STATEFUL = require("LIB.stateful")
+STATEFUL = require("libs.stateful")
 
 --UI MANAGER -- using thrandui for this. It's much cleaner than loveframes  https://github.com/adonaac/thranduil/blob/master/README.md
-UI = require("LIB.UI")
-theme  = require("theme")
-chatboxMaster = require 'chatbox'
+UI = require("libs.thranduil.ui")
+Theme  = require("libs.thranduil.Theme")
+chatboxMaster = require('libs.thranduil.Chatbox')
 
 --SOUND --Just makes sound so much easier to handle
-TESound = require("LIB.TESound")
+TESound = require("libs.TESound")
 
 --COLISSION MANAGER
-HARDON = require("LIB.HARDON.init")
+HARDON = require("libs.hardoncollider")
 
 --Texmate is my own personal animation library for texture packer. 
-TEXMATE = require("LIB.TexMate")
+TEXMATE = require("libs.TexMate")
 
 --TIMER!
-TIMER = require("LIB.timer")
+TIMER = require("libs.hump.timer")
 
 --VECTOR CLASS
-VECTOR = require("LIB.vector")
+VECTOR = require("libs.hump.vector")
 
 --HXDX --https://github.com/adonaac/hxdx
-HX = require("LIB.hxdx")
+HX = require("libs.hxdx")
 
 --My fancy atlas importer. Use the corona exporter from texturepacker
-require("LIB.AtlasImporter")
+require("libs.AtlasImporter")
 
 --Adds the entities folder to the lookup path
-package.path = package.path .. ';ASSETS/ENTITIES/?.lua'
+package.path = package.path .. ';assets/entities/?.lua'
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 --GLOBALS
@@ -86,7 +86,7 @@ package.path = package.path .. ';ASSETS/ENTITIES/?.lua'
 
 --Call out global functions here for cleanliness sake!
 
-myAtlas = loadAtlas("ASSETS.ENTITIES.ENTITIESC","ASSETS/ENTITIES/ENTITIESC.png")
+myAtlas = loadAtlas("assets.entities.entitiesC","assets/entities/entitiesC.png")
 
 --Makes a class that controls the game state. 
 SCENES = CLASS('Menu')
@@ -138,5 +138,3 @@ function love.keypressed(key, isrepeat)
 	GameState:keypressed(key, isrepeat)
 
 end
-
-

@@ -6,7 +6,7 @@
         <key>texturePackerVersion</key>
         <string>3.3.4</string>
         <key>fileName</key>
-        <string>C:/Users/muzz/Documents/48HrFramework/ASSETS/ENTITIES/zomb.tps</string>
+        <string>C:/Users/muzz/Documents/48HrFramework/assets/entities/zomb.tps</string>
         <key>autoSDSettings</key>
         <array>
             <struct type="AutoSDSettings">
@@ -38,7 +38,7 @@
         <key>dataFormat</key>
         <string>corona</string>
         <key>textureFileName</key>
-        <filename>ENTITIESC.png</filename>
+        <filename>entitiesC.png</filename>
         <key>flipPVR</key>
         <false/>
         <key>ditherType</key>
@@ -131,12 +131,12 @@
             <key>data</key>
             <struct type="DataFile">
                 <key>name</key>
-                <filename>ENTITIESC.lua</filename>
+                <filename>entitiesC.lua</filename>
             </struct>
             <key>lua</key>
             <struct type="DataFile">
                 <key>name</key>
-                <filename>ENTITIES.lua</filename>
+                <filename>entities.lua</filename>
             </struct>
         </map>
         <key>multiPack</key>

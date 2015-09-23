@@ -5,7 +5,7 @@
 -- 
 
 return {
-	texture = 'ENTITIES2.png',
+	texture = 'entities2.png',
 	frames = {
 			{
 				name = "Death001.png",
@@ -81,4 +81,3 @@ return {
 			},
 		}
 	}
-

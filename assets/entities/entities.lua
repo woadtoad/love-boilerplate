@@ -7,7 +7,7 @@
 -- Example Usage --
 
 function love.load()
-	myAtlas = require("ENTITIES")
+	myAtlas = require("entities")
 	batch = love.graphics.newSpriteBatch( myAtlas.texture, 100, "stream" )
 end
 function love.draw()
@@ -22,7 +22,7 @@ end
 
 local TextureAtlas = {}
 local Quads = {}
-local Texture = love.graphics.newImage( "ASSETS/ENTITIES/ENTITIES.png" )
+local Texture = love.graphics.newImage( "assets/entities/entities.png" )
 
 Quads["Death001"] = love.graphics.newQuad(208, 2, 38, 50, 388, 64 )
 Quads["Death002"] = love.graphics.newQuad(108, 2, 40, 60, 388, 64 )
