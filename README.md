@@ -29,28 +29,33 @@ The main interface is simple:
 ### [hump](https://vrld.github.io/hump/)
 **H**elper **U**tilities for a **M**ultitude of **P**roblems is a set of lightweight helpers for the awesome LÖVE Engine. hump differs from other libraries in that every component is independent of the remaining ones.
 
-* **hump.gamestate**  
-A gamestate system.
+_Note. we're using the following modules:_
+
 * **hump.timer**  
 Delayed and time-limited function calls, and tweening support.
 * **hump.vector**  
 2D vector math.
-* **hump.vector-light**  
-Lightweight 2D vector math.
-* **hump.class**  
-Object oriented programming for Lua.
-* **hump.signal**  
-Simple Signal/Slot (aka. Observer) implementation.
 * **hump.camera**  
 A camera for LÖVE.
+
+_But the following are also included:_
+
+* hump.gamestate  
+A gamestate system.
+* hump.vector-light  
+Lightweight 2D vector math.
+* hump.class  
+Object oriented programming for Lua.
+* hump.signal  
+Simple Signal/Slot (aka. Observer) implementation.
 
 ### [hxdx](https://github.com/adonaac/hxdx)
 **hxdx** is a physics module for LÖVE. It wraps LÖVE's physics API so that using box2d becomes as simple as possible.
 
 ### [Jumper](https://github.com/Yonaba/Jumper)
 __Jumper__ is a pathfinding library designed for grid-based games. It aims to be __fast__ and __lightweight__.
-It features a wide range of search algorithms, built within a clean interface with 
-chaining features which makes it __very friendly and easy to use__.
+
+It features a wide range of search algorithms, built within a clean interface with chaining features which makes it __very friendly and easy to use__.
 
 ### [middleclass](https://github.com/kikito/middleclass)
 A simple OOP library for Lua. It has inheritance, metamethods (operators), class variables and weak mixin support.
