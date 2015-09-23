@@ -75,7 +75,7 @@ VECTOR = require("libs.hump.vector")
 HX = require("libs.hxdx")
 
 --My fancy atlas importer. Use the corona exporter from texturepacker
-require("libs.AtlasImporter")
+AtlasImporter = require("libs.AtlasImporter")
 
 --Adds the entities folder to the lookup path
 package.path = package.path .. ';assets/entities/?.lua'
@@ -86,7 +86,7 @@ package.path = package.path .. ';assets/entities/?.lua'
 
 --Call out global functions here for cleanliness sake!
 
-myAtlas = loadAtlas("assets.entities.entitiesC","assets/entities/entitiesC.png")
+myAtlas = AtlasImporter.loadAtlasTexturePacker("assets.entities.entitiesC","assets/entities/entitiesC.png")
 
 --Makes a class that controls the game state. 
 SCENES = CLASS('Menu')
