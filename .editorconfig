@@ -8,9 +8,9 @@ charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
 
-# Trying not to autoedit files in libs directory
-[libs/*]
-end_of_line = 
+# Try not to edit libs or generated files
+[{libs/*, assets/entities/*}]
+end_of_line =
 trim_trailing_whitespace = false
 insert_final_newline = false
 
