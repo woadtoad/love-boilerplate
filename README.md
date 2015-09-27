@@ -76,7 +76,7 @@ Sound manager for the Love2D framework. TEsound is intended to make it easier to
 A UI module for LÖVE. Facilitates the creation of game specific UI through UI elements that have all their logic abstracted away. Each element is simple enough and exposes as much of its state as possible, meaning you can use this state to draw the element in whatever way you want or to build new UI elements with it (say you wanna make a menu, you can do it with a bunch of Buttons and a Frame).
 
 ## Credits
-Muzza curated this fine assortment of fashionable Lua libraries.
+[Muzz](https://github.com/Muzz) curated this fine assortment of fashionable Lua libraries.
 
 [Tiled]: http://www.mapeditor.org/
 [LOVE]: https://www.love2d.org/
