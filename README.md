@@ -3,6 +3,8 @@
 # Woad Toad™ Surfware™
 A games developments frameworks for Lua.
 
+[![Slack Status](https://woadtoad.herokuapp.com/badge.svg)](https://woadtoad.herokuapp.com/)
+
 ## Structure
 // TODO: Basic directory / file structure of the framework
 
