@@ -1,0 +1,3 @@
+[submodule "libs/texmate"]
+	path = libs/texmate
+	url = https://github.com/Muzz/TexMate.git
