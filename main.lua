@@ -58,7 +58,7 @@ TESound = require("libs.TESound")
 HARDON = require("libs.hardoncollider")
 
 --Texmate is my own personal animation library for texture packer.
-TEXMATE = require("libs.TexMate")
+TEXMATE = require("libs.texmate.TexMate")
 
 --TIMER!
 TIMER = require("libs.hump.timer")
@@ -70,7 +70,7 @@ VECTOR = require("libs.hump.vector")
 HX = require("libs.hxdx")
 
 --My fancy atlas importer. Use the corona exporter from texturepacker
-AtlasImporter = require("libs.AtlasImporter")
+AtlasImporter = require("libs.texmate.AtlasImporter")
 
 --Adds the entities folder to the lookup path
 package.path = package.path .. ';assets/entities/?.lua;libs/?.lua'
