@@ -5,8 +5,38 @@ A games developments frameworks for Lua.
 
 [![Slack Status](https://woadtoad.herokuapp.com/badge.svg)](https://woadtoad.herokuapp.com/)
 
+## Install
+
+You'll want to run the following steps, because some of the libs are submodules.
+
+```shell
+git clone https://github.com/woadtoad/love-boilerplate.git
+cd love-boilerplate
+git submodule update --init
+```
+
 ## Structure
-// TODO: Basic directory / file structure of the framework
+
+### Globals vs Modules
+Modules over globals. Globals are generally a bad idea, so try your best to avoid them.
+
+### Directories
+
+```
+assets/
+```
+In the `assets/` are generated sprite sheets and lua factories that come from TexturePacker.
+
+```
+libs/
+```
+In the `libs/` are thirdparty libraries, which aren't (yet) modified. A special case is TexMate, which is a git submodule. See Install for details.
+
+```
+src/
+```
+In `src/` are our .lua source files for the game. Add wonderful codes here.
+
 
 ## Libraries
 
@@ -71,7 +101,7 @@ Lua implementation of [State pattern](https://en.wikipedia.org/wiki/State_patter
 ### [TESound](https://love2d.org/wiki/TEsound)
 Sound manager for the Love2D framework. TEsound is intended to make it easier to use sounds and music in your games.
 
-### [TexMate (& AtlasImporter)](https://github.com/Muzz/TexMate)
+### [TexMate (& AtlasImporter)](TexMate)
 [Texture Packer](https://www.codeandweb.com/texturepacker) and [ShoeBox](http://renderhjs.net/shoebox/) importer and animation helper library for LÖVE.
 
 ### [Thranduil](https://github.com/adonaac/thranduil)
@@ -83,3 +113,4 @@ A UI module for LÖVE. Facilitates the creation of game specific UI through UI e
 [Tiled]: http://www.mapeditor.org/
 [LOVE]: https://www.love2d.org/
 [sti-docs]: http://karai17.github.io/Simple-Tiled-Implementation/
+[TexMate]: https://github.com/Muzz/TexMate
