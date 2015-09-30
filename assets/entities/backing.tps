@@ -6,7 +6,7 @@
         <key>texturePackerVersion</key>
         <string>3.3.4</string>
         <key>fileName</key>
-        <string>C:/Users/muzz/Documents/48hr-framework/assets/entities/zomb.tps</string>
+        <string>C:/Users/muzz/Documents/48hr-framework/assets/entities/backing.tps</string>
         <key>autoSDSettings</key>
         <array>
             <struct type="AutoSDSettings">
@@ -38,7 +38,7 @@
         <key>dataFormat</key>
         <string>corona</string>
         <key>textureFileName</key>
-        <filename>../../../dryrun-2015/assets/entities/entitiesC.png</filename>
+        <filename>../../../dryrun-2015/assets/entities/Background.png</filename>
         <key>flipPVR</key>
         <false/>
         <key>ditherType</key>
@@ -131,12 +131,7 @@
             <key>data</key>
             <struct type="DataFile">
                 <key>name</key>
-                <filename>../../../dryrun-2015/assets/entities/entitiesC.lua</filename>
-            </struct>
-            <key>lua</key>
-            <struct type="DataFile">
-                <key>name</key>
-                <filename>entities.lua</filename>
+                <filename>../../../dryrun-2015/assets/entities/Background.lua</filename>
             </struct>
         </map>
         <key>multiPack</key>
@@ -159,7 +154,7 @@
         <key>globalSpriteSettings</key>
         <struct type="SpriteSettings">
             <key>scale</key>
-            <double>1</double>
+            <double>2</double>
             <key>scaleMode</key>
             <enum type="ScaleMode">Fast</enum>
             <key>innerPadding</key>
@@ -177,26 +172,9 @@
         </struct>
         <key>fileList</key>
         <array>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/GenericDeathZomb</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb001.png</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb002.png</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb003.png</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb004.png</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb005.png</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb006.png</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb007.png</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb008.png</filename>
-            <filename>../../../../Google Drive/ZombieGame/Delivery/Animation/FastZombie/fastZomb009.png</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/Bow.png</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/Bow.swf</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/cauldron.swf</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/Arrow.swf</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/platform.swf</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/coin.swf</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/Run.swf</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/Skid.swf</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/Idle.swf</filename>
-            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/smoke.swf</filename>
+            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/Background.swf</filename>
+            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/Walls.swf</filename>
+            <filename>../../../../Google Drive/DRYRUNASSETS/BaseAssets/floor.swf</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

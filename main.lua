@@ -1,7 +1,4 @@
 
-
-
-
 toad = [[
 
                                        ,▄▄▄▄▄,
@@ -19,7 +16,7 @@ toad = [[
                         ╙███▀▓▄▄ └██ ▄█▀██▄     ▄████í
                           ▀█▓,,└  ║██▀   ▀▀██▓▓▄▄█████▄
                             ╙▀▀██████#▓▓▓▓███▀▀▀▀▀▀▀▀▀└
-                                  .└└└└
+
 
   888       888 .d88888b.        d88888888888b.88888888888 .d88888b.        d88888888888b.
   888   o   888d88P" "Y88b      d88888888  "Y88b   888    d88P" "Y88b      d88888888  "Y88b
@@ -28,10 +25,9 @@ toad = [[
   888d88888b888888     888   d88P  888888    888   888    888     888   d88P  888888    888
   88888P Y88888888     888  d88P   888888    888   888    888     888  d88P   888888    888
   8888P   Y8888Y88b. .d88P d8888888888888  .d88P   888    Y88b. .d88P d8888888888888  .d88P
-    888P     Y888 "Y88888P" d88P     8888888888P"    888     "Y88888P" d88P     8888888888P"
+  888P     Y888 "Y88888P" d88P     8888888888P"    888     "Y88888P" d88P     8888888888P"
 
 ]]
-
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 --REQUIRE
@@ -53,6 +49,7 @@ STATEFUL = require("libs.stateful")
 UI = require("libs.thranduil.ui")
 Theme  = require("libs.thranduil.Theme")
 chatboxMaster = require('libs.thranduil.Chatbox')
+UI.DefaultTheme = Theme
 
 --SOUND --Just makes sound so much easier to handle
 TESound = require("libs.TESound")
@@ -76,7 +73,7 @@ HX = require("libs.hxdx")
 AtlasImporter = require("libs.AtlasImporter")
 
 --Adds the entities folder to the lookup path
-package.path = package.path .. ';assets/entities/?.lua'
+package.path = package.path .. ';assets/entities/?.lua;libs/?.lua'
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 --GLOBALS

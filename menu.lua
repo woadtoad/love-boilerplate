@@ -1,13 +1,13 @@
 local Menu = SCENES:addState('Menu')
 
 function Menu:initialize()
-  chatbox = chatboxMaster(10, 200, 300, 390)
+  --chatbox = chatboxMaster(10, 200, 300, 390)
 
   button = UI.Button(10, 10, 90, 90)
 end
 
 function Menu:update(dt)
-  chatbox:update(dt)
+  --chatbox:update(dt)
   button:update(dt)
 
   -- buttons have a bool
@@ -18,7 +18,7 @@ function Menu:update(dt)
 end
 
 function Menu:draw()
-  chatbox:draw()
+  --chatbox:draw()
   button:draw()
 end
 

@@ -7,7 +7,7 @@ function love.conf(t)
   t.title             = "WOADTOAD 48 HR"
   t.author            = "WOADTOAD"
   t.identity          = "WOADTOADGM"
-  t.console           = true
+  --t.console           = true
 
   t.modules.joystick  = true
   t.modules.audio     = true

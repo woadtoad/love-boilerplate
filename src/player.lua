@@ -13,17 +13,8 @@ function PL:initialize()
   animlist = {}
   animlist["Death"] = {
     framerate = 14,
-    frames = {
-      "Death001",
-      "Death002",
-      "Death003",
-      "Death004",
-      "Death005",
-      "Death006",
-      "Death007",
-      "Death008",
-      "Death009"
-    }
+    frames = {TEXMATE:frameCounter("Death",1,9,3,".png")}
+
   }
 
   animlist["Run"] = {
