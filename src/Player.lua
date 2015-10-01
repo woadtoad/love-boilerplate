@@ -1,13 +1,11 @@
-local PL = CLASS('player')
-PL:include(STATEFUL)
+local Pools = require("src.effectsPool")
+local TexMate = require("texmate.TexMate")
+local world = require('src.world')
 
+local Player = class('Player')
+Player:include(require('stateful'))
 
-Pools = require("src.effectsPool")
---Default state
---------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------
-
-function PL:initialize()
+function Player:initialize()
   self.Health = 10
 
   --this is how we setup the animations, I may write a
@@ -15,7 +13,7 @@ function PL:initialize()
   animlist = {}
   animlist["Death"] = {
     framerate = 14,
-    frames = {TEXMATE:frameCounter("Death",1,9,3,".png")}
+    frames = {TexMate:frameCounter("Death",1,9,3,".png")}
 
   }
 
@@ -35,9 +33,9 @@ function PL:initialize()
   }
 
   --make the sprite , args: atlas, animation dataformat, default animation.
-  self.sprite = TEXMATE:new(myAtlas,animlist,"Death",nil,nil,0,-30)
+  self.sprite = TexMate:new(ATLAS,animlist,"Death",nil,nil,0,-30)
 
-  self.Pool = Pools:new(TEXMATE,30,myAtlas,animlist,"Death",100,100,0,-30)
+  self.Pool = Pools:new(TexMate,30,ATLAS,animlist,"Death",100,100,0,-30)
 
   self.poolitem1 = self.Pool:makeActive()
 
@@ -47,7 +45,7 @@ function PL:initialize()
   self.collision.body:applyLinearImpulse(100,0,self.collision.body:getX()-30,self.collision.body:getY()-30)
 end
 
-function PL:update(dt)
+function Player:update(dt)
 
   if love.keyboard.isDown("l") then
      self.Pool:deactivate(self.poolitem1.key)
@@ -64,16 +62,16 @@ function PL:update(dt)
 
 end
 
-function PL:draw()
+function Player:draw()
   self.Pool:draw()
   self.sprite:draw()
 end
 
-function PL:speak()
+function Player:speak()
   print("Default!")
 end
 
-function PL:keypressed(key, isrepeat)
+function Player:keypressed(key, isrepeat)
 
 end
 
@@ -81,7 +79,7 @@ end
 --------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------
 
-local Idle = PL:addState('Idle')
+local Idle = Player:addState('Idle')
 
 function Idle:speak()
   print("Idle!")
@@ -91,4 +89,4 @@ function Idle:update(dt)
 
 end
 
-return PL
+return Player

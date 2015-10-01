@@ -37,6 +37,11 @@ src/
 ```
 In `src/` are our .lua source files for the game. Add wonderful codes here.
 
+```
+src/SCENES.lua
+src/scenes
+```
+Scenes in the game are added and maintained in this file and directory.
 
 ## Libraries
 

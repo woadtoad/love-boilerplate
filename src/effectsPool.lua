@@ -1,4 +1,4 @@
-local Pool = CLASS('pool')
+local Pool = class('pool')
 
 function Pool:initialize(item,count,...)
 
