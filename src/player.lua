@@ -37,16 +37,9 @@ function PL:initialize()
   --make the sprite , args: atlas, animation dataformat, default animation.
   self.sprite = TEXMATE:new(myAtlas,animlist,"Death",nil,nil,0,-30)
 
-  self.sprite2 = TEXMATE:new(myAtlas,animlist,"Death",nil,nil,0,-30)
-  self.sprite2.endCallback["Death"] = function()
-      self.sprite2 = nil
-  end
-
   self.Pool = Pools:new(TEXMATE,30,myAtlas,animlist,"Death",100,100,0,-30)
 
   self.poolitem1 = self.Pool:makeActive()
-
-
 
   self.collision = world:newRectangleCollider(300, 300, 50, 50, {collision_class = 'Player'})
   self.collision.body:setFixedRotation(false)
